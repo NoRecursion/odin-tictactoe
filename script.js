@@ -1,6 +1,6 @@
 function Player(name){
     let score = 0;
-    let piece;
+    let piece = null;
 
     function incrementScore(){
         score++;
@@ -28,47 +28,11 @@ function Board(){
         board[y][x] = piece;
     }
 
-    function placeSafe(piece,y,x){
+    function placeSafe(player,y,x){
         if(board[y][x]!=null){throw Error("That location is occupied");}
-        placeHard(piece,y,x)
-    }
-    
-    function checkWin(argBoard = board){
-
-        for(let i=0; i<3;i++){
-            const piece = argBoard[i][0];
-            if(piece == null){continue;}
-            else if (piece==argBoard[i][1] && piece==argBoard[i][2]){
-                return [piece,'r',i];
-            }
-        }
-
-        for(let i=0; i<3;i++){
-            const piece =argBoard[0][i];
-            if( piece == null){continue;}
-            else if (piece==argBoard[1][i] && piece==argBoard[2][i]){
-                return [piece, 'c',i]
-            }
-        }
-
-        {
-            const piece = argBoard[0][0];
-            if( piece == null){;}
-            else if (piece==argBoard[1][1] && piece==argBoard[2][2]){
-                return [piece,'d',0];
-            }
-        }
-
-        {
-            const piece = argBoard[0][2];
-            if( piece == null){;}
-            else if (piece==argBoard[1][1] && piece==argBoard[2][0]){
-                return [piece,'d',1];
-            }
-        }
-
-
-        return false
+        if(player.piece===null){throw Error(`${player.name} has no piece to play`)}
+        
+        placeHard(player.piece,y,x);
     }
 
     return {
@@ -76,22 +40,60 @@ function Board(){
         set state(dummy){throw Error("Can't set board state")},
         placeSafe,
         placeHard,
-        checkWin,
-    }
+    };
 }
 
 function GameController(board, p1,p2){
-    let gameOver = false
+    let gameOver = false;
     let turn = 0;
     p1.piece = 0;
     p2.piece = 1;
     const players = [p1, p2];
 
+    function checkWin(argBoard = board.state){ //Optional argument for bot player to check possible futur states
+
+        for(let i=0; i<3;i++){
+            const piece = argBoard[i][0];
+            if(piece === null){continue;}
+            else if (piece===argBoard[i][1] && piece===argBoard[i][2]){
+                return [piece,'r',i];
+            }
+        }
+
+        for(let i=0; i<3;i++){
+            const piece =argBoard[0][i];
+            if( piece === null){continue;}
+            else if (piece===argBoard[1][i] && piece===argBoard[2][i]){
+                return [piece, 'c',i]
+            }
+        }
+
+        {
+            const piece = argBoard[0][0];
+            if( piece === null){;}
+            else if (piece===argBoard[1][1] && piece===argBoard[2][2]){
+                return [piece,'d',0];
+            }
+        }
+
+        {
+            const piece = argBoard[0][2];
+            if( piece === null){;}
+            else if (piece===argBoard[1][1] && piece===argBoard[2][0]){
+                return [piece,'d',1];
+            }
+        }
+
+        if(turn === 8){return [null,'x',0];}
+
+        return false;
+    }
+
     function play(y,x){
         if(gameOver){throw Error("Game is finished. Reset the board");}
 
         const p = players[turn%2];
-        board.placeSafe(p.piece,y,x);
+        board.placeSafe(p,y,x);
 
         const winStatus = board.checkWin();
 
@@ -104,30 +106,56 @@ function GameController(board, p1,p2){
 
     function resetBoard(){
         gameOver=false;
+        turn = 0;
         board = Board();
     }
 
-    function consolePlay(){
+    function botPlay(){ //TODO
 
+    }
+
+    async function consolePlay(){
+
+        const readline = require('readline');
+
+        const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+        });
+
+        const ask = (question) => {
+        return new Promise((resolve) => {
+            rl.question(question, (answer) => {
+            resolve(answer);
+            });
+        });
+        };
+
+        let winstat
         
-        for(let __turn=0;__turn<9;__turn++){
+        for(let t=0;t<9;t++){
             const state = board.state;
             for(let i=0;i<3;i++){
                 console.log(state[i]);
             }
 
-            let loc= prompt("Where do you play?").split(' ').map((e)=>Number(e));
+            const inp = await ask("where to play? ");
 
-            play(loc[0], loc[1]);
+            const loc= inp.split(' ').map((e)=>Number(e));
+
+            winstat = play(loc[0], loc[1]);
 
             if(gameOver){break;}
         }
+        console.log(winstat);
+        rl.close();
     }
 
     return {
         consolePlay
-    }
+    };
 }
-
-const g = GameController(Board(),Player("a"),Player("b"));
-g.consolePlay()
+/*
+const foo = GameController(Board(),Player('a'),Player('b'))
+foo.consolePlay()
+*/
