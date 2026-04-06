@@ -10,23 +10,28 @@ function Player(name, piece){
         score = 0;
     }
 
+    function setName(newName){
+        name = newName;
+    }
+
     return {
         get name(){return name},
-        set name(dummy){throw new Error("Can't reset player name")},
+        set name(dummy){throw new Error("Use setName to reassign name")},
         get score(){return score},
         set score(dummy){throw new Error("Can't directly set player score")},
         piece,
         incrementScore,
         resetScore,
+        setName,
     };
 }
 
 function Board(){
     let board;
+
     function reset(){
         board = Array.from({length: 3}, () => Array(3).fill(null));
     }
-    reset();
 
     function placeHard(piece,y,x){
         board[y][x] = piece;
@@ -41,6 +46,8 @@ function Board(){
         if(player.piece===null){throw new Error(`${player.name} has no piece to play`)}
         placeHard(player.piece,y,x);
     }
+
+    reset();
 
     return {
         get state(){return structuredClone(board)},
@@ -60,6 +67,11 @@ function GameController(board, players){
 
     let gameOver = false;
     let turn = 0;
+    let round = 1;
+
+    function whosTurn(){
+        return (round+turn-1)%2;
+    }
 
     function checkWin(argBoard = board.state){ //Optional argument for bot player to check possible futur states
 
@@ -103,7 +115,7 @@ function GameController(board, players){
     function play(y,x){
         if(gameOver!==false){throw new Error("Game is finished. Reset the board");}
 
-        const p = players[turn%2];
+        const p = players[whosTurn()];
         board.placeSafe(p,y,x);
 
         gameOver = checkWin();
@@ -113,10 +125,15 @@ function GameController(board, players){
         return gameOver;
     }
 
-    function resetGame(){
+    function resetRound(){
         gameOver=false;
         turn = 0;
         board.reset();
+    }
+
+    function nextRound(){
+        resetRound();
+        round++;
     }
 
     function botPlay(){ //TODO
@@ -166,7 +183,8 @@ function GameController(board, players){
         set gameOver(dummy){throw new Error("Can't set gameController.gameOver")},
         play,
         checkWin,
-        resetGame,
+        nextRound,
+        whosTurn,
     };
 }
 /*
@@ -175,16 +193,86 @@ foo.consolePlay()
 */
 
 const DisplayController = (()=>{
-    let players = [Player('player 1','x'), Player('player 2','o')];
+    let players = [Player('Player 1','x'), Player('Player 2','o')];
+    let playerBoxes;
     let board = Board();
     let gameController = GameController(board,players)
 
     const grid = document.querySelector("#play-area");
     let cells;
 
+    function paintPlayerBoxes(){
+        for(let i=0;i<2;i++){
+            p = players[i];
+            box = playerBoxes[i];
+            box.name.textContent = p.name;
+            box.score.textContent = `Score: ${p.score}`
+        }
+    }
+
+    function setupNameBtn(btn,i){
+        btn.addEventListener("click", (e)=>{ 
+            btn.replaceChildren();
+            btn.classList.remove("edit-me");
+        })
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // stops a newline from being inserted
+                btn.blur();
+            }
+        });
+        btn.addEventListener('blur', () => {
+            let name = btn.textContent.trim();
+            if(name===''){name = `Player ${i+1}`}
+            players[i].setName(name)
+            paintPlayerBoxes();
+        });
+    }
+
+    function initializePlayerBoxes(){
+        playerBoxes = [document.querySelector("#p1-box"), document.querySelector("#p2-box")];
+
+        for(let i=0; i<2; i++){
+            const box = playerBoxes[i];
+
+            let name = box.querySelector(".name");
+            let score = box.querySelector(".score");
+            let myTurn = box.querySelector(".turn-marker");
+
+            let mark = box.querySelector(".mark-x");
+            let piece;
+            if (mark !== null){piece = 'x';}
+            else {
+                mark = box.querySelector(".mark-o");
+                piece = 'o';
+            } 
+            Object.assign(box, {name, score, myTurn, mark, piece});
+            setupNameBtn(name,i);
+        }
+    }
+
+    function paintWhosTurn(){
+        const playing = gameController.whosTurn();
+        const waiting = (playing+1)%2;
+        playerBoxes[waiting].myTurn.classList.add("hidden");
+
+        if (gameController.gameOver===false){
+            playerBoxes[playing].myTurn.classList.remove("hidden");
+        }
+        else{
+            playerBoxes[playing].myTurn.classList.add("hidden");
+        }
+    }
+
     function drawWinner(){
         const winState = gameController.gameOver;
         if (winState===false){return;}
+
+        if (winState[0]===null){
+            console.log("draw!");
+            paintPlayerBoxes();
+            return;
+        }
 
         const winner = (()=>{
             const wonPiece = winState[0];
@@ -193,6 +281,7 @@ const DisplayController = (()=>{
             }
         })()
 
+        winner.incrementScore();
         const winType = winState[1];
         const n = winState[2];
 
@@ -201,8 +290,6 @@ const DisplayController = (()=>{
         const winLine = document.createElement("div");
         winLine.classList.add("win-line", winType);
 
-        console.log(n);
-        console.log(winType);
         switch (winState[1]){
             case "column":
                 winLine.style.setProperty('grid-column', `${n + 1} / ${n + 2}`);
@@ -216,8 +303,9 @@ const DisplayController = (()=>{
             default:
                 throw new Error("Critical error: Illegal winstate")
         }
-
+        paintPlayerBoxes();
         grid.appendChild(winLine);
+        return;
     }    
 
     function makeCellClick(y,x,cell){
@@ -232,7 +320,8 @@ const DisplayController = (()=>{
             const markDiv = document.createElement("div");
             markDiv.classList.add(`mark-${mark}`);
             cell.appendChild(markDiv);
-            drawWinner()
+            paintWhosTurn();
+            drawWinner();
         }
 
         return clicker
@@ -260,6 +349,21 @@ const DisplayController = (()=>{
         }
     }
 
+    initializePlayerBoxes()
     resetCells();
 
+    let inplay = true;
+    grid.addEventListener("click",(e)=>{
+        if(gameController.gameOver===false){
+            inplay = true;
+            return;
+        }
+        if(inplay){
+            inplay=false;
+            return;
+        }
+        gameController.nextRound();
+        resetCells();
+        paintWhosTurn();
+    })
 })()

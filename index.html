@@ -19,11 +19,17 @@
     </div>
     <div class="content-container">
         <div class="player-box" id="p1-box">
-            <h2>Player 1</h2>
-            <h3>Score: 13</h3>
-            <h3>Your turn</h3>
+            <h2 
+                contenteditable="true"
+                spellcheck="false"
+                class="edit-me name"
+            >
+                Player 1
+            </h2>
+
+            <h3 class="score">Score: 0</h3>
+            <h3 class="turn-marker">Your turn</h3>
             <div class="mark-x"></div>
-            <button>Edit</button>
         </div>
 
         <div class="game-box" id="game-box">
@@ -45,11 +51,17 @@
         </div>
 
         <div class="player-box" id="p2-box">
-            <input type="text" placeholder="name">
-            <h3>Score: 233</h3>
-            <h3>Your turn</h3>
-            <input type="color">
-            <button>Edit</button>
+            <h2 
+                contenteditable="true"
+                spellcheck="false"
+                class="edit-me name"
+            >
+                Player 2
+            </h2>
+
+            <h3 class="score">Score: 0</h3>
+            <h3 class="turn-marker hidden">Your turn</h3>
+            <div class="mark-o"></div>
         </div>
     </div>
 
