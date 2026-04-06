@@ -4,14 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tic-tac-toe</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+    <link rel="icon" type="image/x-icon" href="icon.png">
     <link rel="stylesheet" href="./style.css">
-   <script src="./script.js" defer></script>
+    <script src="./script.js" defer></script>
 </head>
 <body>
     <div class="topbar">
         <h1>Tic-Tac-Toe</h1>
     </div>
     <div class="content-container">
+        <div class="player-box" id="p1-box">
+            <h2>Player 1</h2>
+            <h3>Score: 13</h3>
+            <h3>Your turn</h3>
+            <div class="mark-x"></div>
+            <button>Edit</button>
+        </div>
+
         <div class="game-box" id="game-box">
             
 
@@ -26,9 +40,16 @@
                     <div class="win-line column"></div>
                     <div class="win-line row"></div>
                 -->
-
             </div>
 
+        </div>
+
+        <div class="player-box" id="p2-box">
+            <input type="text" placeholder="name">
+            <h3>Score: 233</h3>
+            <h3>Your turn</h3>
+            <input type="color">
+            <button>Edit</button>
         </div>
     </div>
 

@@ -41,31 +41,93 @@ button{
 
 /* -------------------------------- Style -------------------------------- */
 
+:root{
+    --box-size: 700px;
+    --player-box-width: 300px;
+    --gap-width: 30px;
+
+    --x-color: rgb(127, 0, 0);
+    --o-color: rgb(0, 0, 127);
+
+    font-family: "Roboto", sans-serif;
+
+}
+
 body{
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
+}
+
+.hidden {
+    visibility: hidden;
 }
 
 .topbar{
-    height: 100px;
-    background-color: antiquewhite;
+    width: 100%;
+    min-height: 10vh;
+    background-color: rgb(248, 206, 128);
+    padding: 20px;
+    padding-left: 55px;
+    font-size: 24pt;
 }
 
 .content-container{
     flex: 1;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     background-color: bisque;
 }
 
+.player-box{
+    font-size: 24px;
+    display: grid;
+    justify-content: center;
+    align-content: space-around;
+    align-items: center;
+    
+    height: var(--box-size);
+    width: var(--player-box-width);
+    background-color: rgb(255, 200, 89);
+    padding: 30px;
+
+    &:has(~ .player-box){
+        border-radius: 0px 50px 50px 0px;
+        justify-items: start;
+
+    }
+    ~ .player-box{
+        border-radius: 50px 0px 0px 50px;
+        justify-items: end;
+
+    }
+    &&:has(input){
+        justify-items: center;
+    }
+
+    .mark-o,
+    .mark-x{
+        --gap-width: 1em;
+        width: 5em;
+        justify-self: center;
+    }
+
+    button{
+        width: 4em;
+        border-radius: 5px;
+        justify-self: center;
+    }
+
+    input[type=text]{
+        width: calc(var(--player-box-width)*0.6);
+    }
+
+}
+
 .game-box{
-    --box-size: 700px;
-    --gap-width: 30px;
     height: var(--box-size);
     aspect-ratio: 1;
-    background-color: white;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 1fr 1fr 1fr;
@@ -131,7 +193,7 @@ body{
     width: 70%;
     aspect-ratio: 1;
     border-radius: 50%;
-    border: solid var(--gap-width) rgb(0, 0, 127);
+    border: solid var(--gap-width) var(--o-color);
 }
 
 .mark-x {
@@ -144,7 +206,7 @@ body{
         position: absolute;
         width: 110%;
         height: var(--gap-width);
-        background-color: rgb(127, 0, 0);
+        background-color: var(--x-color);
         border-radius: 9999px;
         top: 50%;
         left: 50%;
@@ -158,7 +220,7 @@ body{
 .win-line{
     justify-self: center;
     align-self: center;
-    --length: calc(var(--box-size) - 50px);
+    --length: calc(var(--box-size) - 20px);
     --thickness: 50px;
     z-index: 2;
     background-color: rgba(14, 138, 76, 0.7);
