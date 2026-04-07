@@ -1,3 +1,10 @@
+function shuffle(arr) { //Fisher-Yates
+    for (let i = arr.length-1; i > 0; i--) {
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
+
 function Player(name, piece){
     let score = 0;
     piece = piece.toLowerCase()
@@ -136,61 +143,60 @@ function GameController(board, players){
         round++;
     }
 
-    function botPlay(){ //TODO
-
-    }
-/*
-    async function consolePlay(){
-
-        const readline = require('readline');
-
-        const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-        });
-
-        const ask = (question) => {
-        return new Promise((resolve) => {
-            rl.question(question, (answer) => {
-            resolve(answer);
-            });
-        });
-        };
-
-        let winstat
-        
-        for(let t=0;t<9;t++){
-            const state = board.state;
-            for(let i=0;i<3;i++){
-                console.log(state[i]);
-            }
-
-            const inp = await ask("where to play? ");
-
-            const loc= inp.split(' ').map((e)=>Number(e));
-
-            winstat = play(loc[0], loc[1]);
-
-            if(gameOver!==false){break;}
-        }
-        console.log(winstat);
-        rl.close();
-    }
-*/
     return {
-        //consolePlay,
+        turn,
+        round,
         get gameOver(){return gameOver},
         set gameOver(dummy){throw new Error("Can't set gameController.gameOver")},
+        get board(){return board.state},
+        get players(){return structuredClone(players)},
         play,
         checkWin,
         nextRound,
         whosTurn,
     };
 }
-/*
-const foo = GameController(Board(),Player('a'),Player('b'))
-foo.consolePlay()
-*/
+
+function Bot(gameController){
+    const corners = [[0,0],[0,2],[2,0],[2,2]]
+    const center = [[1,1]]
+    const edges = [[0,1],[1,0],[1,2],[2,2]]
+    const moveSet = [corners,center,edges]
+
+    function predictWin(piece){
+        let board = gameController.board;
+        let winq;
+
+        for(let y=0; y<3; y++){
+            for(let x=0; x<3; x++){
+                if(board[y][x]!==null){continue;}
+
+                board[y][x] = piece;
+
+                winq = gameController.checkWin(board);
+                if(winq !== false){return [y,x];}
+
+                board[y][x] = null;
+            }
+        }
+        return null;
+    }
+
+    function shuffleMoves(){
+        shuffle(corners);
+        shuffle(edges);
+    }
+
+    function normalMove(){
+        for(const zone of moveSet){
+            for(const [y,x] of zone){
+            }
+        }
+    }
+
+
+
+}
 
 const DisplayController = (()=>{
     let players = [Player('Player 1','x'), Player('Player 2','o')];
@@ -198,6 +204,7 @@ const DisplayController = (()=>{
     let board = Board();
     let gameController = GameController(board,players)
 
+    const root = document.querySelector(":root")
     const grid = document.querySelector("#play-area");
     let cells;
 
@@ -211,7 +218,11 @@ const DisplayController = (()=>{
     }
 
     function setupNameBtn(btn,i){
-        btn.addEventListener("click", (e)=>{ 
+        let touched = false;
+
+        btn.addEventListener("click", (e)=>{
+            if(touched){return;}
+            touched = true;
             btn.replaceChildren();
             btn.classList.remove("edit-me");
         })
@@ -227,6 +238,19 @@ const DisplayController = (()=>{
             players[i].setName(name)
             paintPlayerBoxes();
         });
+    }
+
+    function setUpMarkBtn(mark, piece){
+        const inp = mark.querySelector("input[type='color']");
+        inp.value = getComputedStyle(root).getPropertyValue(`--${piece}-color`);
+
+        mark.addEventListener("input",(e)=>{
+            root.style.setProperty(`--${piece}-color`,inp.value);
+        })
+
+        mark.addEventListener("click",(e)=>{
+            inp.click();
+        })
     }
 
     function initializePlayerBoxes(){
@@ -245,7 +269,11 @@ const DisplayController = (()=>{
             else {
                 mark = box.querySelector(".mark-o");
                 piece = 'o';
-            } 
+            }  
+            setUpMarkBtn(mark,piece);
+
+
+
             Object.assign(box, {name, score, myTurn, mark, piece});
             setupNameBtn(name,i);
         }

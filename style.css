@@ -46,8 +46,8 @@ button{
     --player-box-width: 300px;
     --gap-width: 30px;
 
-    --x-color: rgb(127, 0, 0);
-    --o-color: rgb(0, 0, 127);
+    --x-color: #880000;
+    --o-color: #000088;
 
     font-family: "Roboto", sans-serif;
 
@@ -96,26 +96,46 @@ body{
         border-radius: 0px 50px 50px 0px;
         justify-items: start;
 
+        input[type="color"]{
+            top: var(--border-offset);
+            right: var(--border-offset);
+        }
+
     }
     ~ .player-box{
         border-radius: 50px 0px 0px 50px;
         justify-items: end;
 
+        input[type="color"]{
+            top: var(--border-offset);
+            left: var(--border-offset);
+        }
     }
-    &&:has(input){
-        justify-items: center;
+    
+    
+    .name{
+        min-width: none;
+        &:focus{
+            padding-left: 0.5em;
+            min-width: 3em;
+        }
     }
 
     .mark-o,
     .mark-x{
+        cursor: pointer;
         --gap-width: 1em;
         width: 5em;
         justify-self: center;
+        position: relative;
+
+        input[type="color"]{
+            width: 5px;
+            position: absolute;
+        }
+
     }
 
-    .name{
-        min-width: 2em;
-    }
 }
 
 .edit-me{
@@ -197,6 +217,7 @@ body{
 }
 
 .mark-o{
+    --border-offset: calc(var(--gap-width)*-1);
     width: 70%;
     aspect-ratio: 1;
     border-radius: 50%;
@@ -204,6 +225,7 @@ body{
 }
 
 .mark-x {
+    --border-offset: 0;
     width: 70%;
     aspect-ratio: 1;
     position: relative;
