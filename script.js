@@ -143,6 +143,8 @@ function GameController(board, players){
         round++;
     }
 
+    const isEmpty = board.isEmpty.bind(board);
+
     return {
         turn,
         round,
@@ -154,6 +156,7 @@ function GameController(board, players){
         checkWin,
         nextRound,
         whosTurn,
+        isEmpty,
     };
 }
 
@@ -190,19 +193,40 @@ function Bot(gameController){
     function normalMove(){
         for(const zone of moveSet){
             for(const [y,x] of zone){
+                if(gameController.isEmpty(y,x)){return [y,x]}
             }
         }
+        return null;
     }
 
+    function nextMove(){
+        shuffleMoves();
 
+        const players = gameController.players;
+        const t = gameController.whosTurn();
+        const me = players[t];
+        const enemy = players[(t+1)%2];
 
+        let move = predictWin(me.piece);
+        if (move !== null){return move;}
+
+        move = predictWin(enemy.piece);
+        if (move !== null){return move;}
+
+        return normalMove()
+    }
+
+    return {
+        nextMove,
+    };
 }
 
-const DisplayController = (()=>{
+const DisplayController = ( ()=>{
     let players = [Player('Player 1','x'), Player('Player 2','o')];
     let playerBoxes;
     let board = Board();
-    let gameController = GameController(board,players)
+    let gameController = GameController(board,players);
+    let bot = Bot(gameController);
 
     const root = document.querySelector(":root")
     const grid = document.querySelector("#play-area");
@@ -395,3 +419,28 @@ const DisplayController = (()=>{
         paintWhosTurn();
     })
 })()
+
+/*
+solutions for continuous checkin
+
+sol 1
+
+setInterval(() => {
+    if (someValue === something) {
+        // do something
+    }
+}, 2000);
+
+
+
+sol 2
+
+function check() {
+    // do something
+
+    const delay = Math.random() * 3000 + 500; // random between 500ms and 3500ms
+    setTimeout(check, delay);
+}
+
+check();
+*/
