@@ -77,7 +77,8 @@ function GameController(board, players){
     let round = 1;
 
     function whosTurn(){
-        return (round+turn-1)%2;
+        if (gameOver===false) return (round+turn-1)%2;
+        return null;
     }
 
     function checkWin(argBoard = board.state){ //Optional argument for bot player to check possible futur states
@@ -151,7 +152,7 @@ function GameController(board, players){
         get gameOver(){return gameOver},
         set gameOver(dummy){throw new Error("Can't set gameController.gameOver")},
         get board(){return board.state},
-        get players(){return structuredClone(players)},
+        get players(){return players},
         play,
         checkWin,
         nextRound,
@@ -196,7 +197,7 @@ function Bot(gameController){
                 if(gameController.isEmpty(y,x)){return [y,x]}
             }
         }
-        return null;
+        throw new Error("No possible moves allowed")
     }
 
     function nextMove(){
@@ -204,6 +205,7 @@ function Bot(gameController){
 
         const players = gameController.players;
         const t = gameController.whosTurn();
+        if(t===null){return null};
         const me = players[t];
         const enemy = players[(t+1)%2];
 
@@ -277,6 +279,13 @@ const DisplayController = ( ()=>{
         })
     }
 
+    function setUpToggleBtn(toggler, box){
+        toggler.addEventListener("click",(e)=>{
+            box.isbot= !box.isbot;
+            toggler.classList.toggle("isbot");
+        })
+    }
+
     function initializePlayerBoxes(){
         playerBoxes = [document.querySelector("#p1-box"), document.querySelector("#p2-box")];
 
@@ -293,26 +302,33 @@ const DisplayController = ( ()=>{
             else {
                 mark = box.querySelector(".mark-o");
                 piece = 'o';
-            }  
-            setUpMarkBtn(mark,piece);
+            } 
+            
+            let toggler = box.querySelector(".player-type-toggle");
+            let isbot=false;
 
-
-
-            Object.assign(box, {name, score, myTurn, mark, piece});
+            Object.assign(box, {name, score, myTurn, mark, piece, toggler, isbot});
+            
             setupNameBtn(name,i);
+            setUpMarkBtn(mark,piece);
+            setUpToggleBtn(toggler, box);
+
+            box.addEventListener("click",(e)=>{
+                blockIfBotThinking();
+            })
         }
     }
 
     function paintWhosTurn(){
-        const playing = gameController.whosTurn();
-        const waiting = (playing+1)%2;
-        playerBoxes[waiting].myTurn.classList.add("hidden");
 
-        if (gameController.gameOver===false){
-            playerBoxes[playing].myTurn.classList.remove("hidden");
+        for(box of playerBoxes){
+            box.myTurn.classList.add("hidden");
         }
-        else{
-            playerBoxes[playing].myTurn.classList.add("hidden");
+
+        const playing = gameController.whosTurn();
+
+        if (playing!==null){
+            playerBoxes[playing].myTurn.classList.remove("hidden");
         }
     }
 
@@ -401,46 +417,56 @@ const DisplayController = ( ()=>{
         }
     }
 
-    initializePlayerBoxes()
-    resetCells();
-
-    let inplay = true;
-    grid.addEventListener("click",(e)=>{
-        if(gameController.gameOver===false){
-            inplay = true;
-            return;
+    const resetIfGameOver = (()=>{
+        let inplay = true;
+        return ()=>{
+            if(gameController.gameOver===false){
+                inplay = true;
+                return;
+            }
+            if(inplay){
+                grid.style.setProperty("cursor","pointer")
+                inplay=false;
+                return;
+            }
+            grid.style.setProperty("cursor","auto")
+            gameController.nextRound();
+            resetCells();
+            paintWhosTurn();
         }
-        if(inplay){
-            inplay=false;
-            return;
+    })();
+
+    function botAction(){
+        if(gameController.gameOver!==false){return;}
+
+        const t = gameController.whosTurn();
+        if (t===null){return;}
+        else if(playerBoxes[t].isbot){
+            const m = bot.nextMove();
+            if(m===null){return;}
+            cells[m[0]][m[1]].click();
         }
-        gameController.nextRound();
-        resetCells();
-        paintWhosTurn();
-    })
-})()
-
-/*
-solutions for continuous checkin
-
-sol 1
-
-setInterval(() => {
-    if (someValue === something) {
-        // do something
     }
-}, 2000);
 
+    function blockIfBotThinking(){
+        const t = gameController.whosTurn();
 
+        if(t!==null && playerBoxes[t].isbot){
+            grid.style.setProperty("pointer-events","none");
+        }else{
+            grid.style.setProperty("pointer-events","auto");
+        }
+    }
 
-sol 2
+    initializePlayerBoxes();
+    
 
-function check() {
-    // do something
+    grid.addEventListener("click",(e)=>{
+        resetIfGameOver();
+        blockIfBotThinking();
+    })
 
-    const delay = Math.random() * 3000 + 500; // random between 500ms and 3500ms
-    setTimeout(check, delay);
-}
-
-check();
-*/
+    resetCells();
+    setInterval(botAction, 1000);
+    playerBoxes[1].toggler.click();
+})()

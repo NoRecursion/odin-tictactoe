@@ -152,6 +152,55 @@ body{
     }
 }
 
+.turn-marker{
+    --color : rgb(255, 246, 227);
+    background-color: var(--color);
+    box-shadow: 
+        -10px 0 0 10px var(--color),
+        10px 0 0 10px var(--color);
+    border-radius: 5px;
+
+    &::before{
+        content: "Your turn";
+    }
+
+    &:has( ~ .isbot)::before{
+        content: "Thinking";
+    }
+}
+
+.player-type-toggle{
+    cursor: pointer;
+    justify-self: center;
+    display: flex;
+
+    div{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .bot{
+        font-family: monospace;
+    }
+
+    &:not(.isbot) .bot{
+        display: none;
+    }
+
+    &.isbot .human{
+        display: none;
+    }
+
+    svg{
+        flex: 0 0 auto;
+        display: inline;
+        width: 50px;
+        height: 50px;
+    }
+}
+
 .game-box{
     height: var(--box-size);
     aspect-ratio: 1;
